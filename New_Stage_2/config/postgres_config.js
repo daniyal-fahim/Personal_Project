@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Use the connection string from environment variables or hardcoded URL
-const POSTGRES = process.env.POSTGRES_URL ;
+const POSTGRES = process.env.POSTGRES_URL;
 
 // Create a new pool with the connection string
 const pool = new Pool({
