@@ -1,10 +1,11 @@
-import { Pool } from "pg";
+import pkg from 'pg';
+const { Pool } = pkg;
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 // Use the connection string from environment variables or hardcoded URL
-const POSTGRES = process.env.POSTGRES_URL || "postgres://neondb_owner:4rxCtSpBT8HI@ep-rough-night-a1sdqfsj-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
+const POSTGRES = process.env.POSTGRES_URL ;
 
 // Create a new pool with the connection string
 const pool = new Pool({

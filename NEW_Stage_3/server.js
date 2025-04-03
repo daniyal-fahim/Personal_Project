@@ -2,7 +2,7 @@ import express from "express";
 import storeRoutes from "./Routes/StoreRoute.js";
 import productRoutes from "./Routes/ProductRoute.js";
 import stockRoutes from "./Routes/StockRoute.js";
-import { initRabbitMQ } from "./Services/rabbitMQ.js";
+import { initRabbitMQ } from "./Services/rabbitmq.js";
 import { redisClient } from "./Config/redis.js";
 import bodyParserMiddleware from "./Middleware/bodyParser.js";
 import authMiddleware from "./Middleware/basicAuth.js";
