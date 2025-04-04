@@ -1,281 +1,71 @@
-# Personal_Project
-Sure! Below is a detailed **README** file for your Inventory Management System (IMS). You can adjust any specifics based on your project setup.
-
----
-
-# Inventory Management System (IMS)
+# Inventory Tracking System - Bazaar Technologies Case Study
 
 ## Overview
+A scalable backend service for tracking inventory and stock movements, evolving from a single kiryana store to a multi-store enterprise system with audit capabilities. Built for Bazaar Technologies' Engineering internship challenge.
 
-The **Inventory Management System (IMS)** is a backend solution built with Node.js, designed to help businesses manage their product inventories across multiple stores. This system supports basic operations such as adding products, updating stock levels, tracking sales, and managing stock movements. It provides a RESTful API that can be easily integrated into web or mobile applications.
+## Key Features
+- **Stage 1**: Single-store implementation with SQLite
+- **Stage 2**: Multi-store support with PostgreSQL + Basic Auth
+- **Stage 3**: Enterprise-ready with Redis caching, RabbitMQ, and audit logs
 
-### Features
+## Tech Stack
+| Component       | Stage 1       | Stage 2           | Stage 3                     |
+|-----------------|---------------|-------------------|-----------------------------|
+| **Database**    | SQLite        | PostgreSQL        | PostgreSQL + Redis          |
+| **API**         | Express.js    | Express.js        | Express.js + Rate Limiting  |
+| **Architecture**| Monolithic    | Multi-store       | Event-Driven (RabbitMQ)     |
+| **Security**    | None          | Basic Auth        | Rate Limits + Auth          |
+| **Scalability** | Single-store  | 500+ stores       | 1000+ stores with caching   |
 
-- **Multi-store Support**: Manage inventories for multiple stores.
-- **Stock Movement Tracking**: Track stock-in, sales, and removals.
-- **Database**: Supports both SQLite (for simplicity) and PostgreSQL (for scalability).
-- **Authentication**: Secure API access with basic authentication.
-- **Rate Limiting**: Prevents abuse by limiting API request frequency.
+## Design Decisions
 
-## Table of Contents
-
-- [System Design](#system-design)
-  - [Stage 1 (SQLite)](#stage-1-sqlite)
-  - [Stage 2 (PostgreSQL)](#stage-2-postgresql)
-  - [Stage 3 (PostgreSQL + Advanced Features)](#stage-3-postgresql--advanced-features)
-- [API Endpoints](#api-endpoints)
-- [Installation & Setup](#installation--setup)
-  - [Stage 1 Setup](#stage-1-setup)
-  - [Stage 2 Setup](#stage-2-setup)
-  - [Stage 3 Setup](#stage-3-setup)
-- [Usage](#usage)
-  - [Stage 1 Usage](#stage-1-usage)
-  - [Stage 2 Usage](#stage-2-usage)
-  - [Stage 3 Usage](#stage-3-usage)
-- [Future Enhancements](#future-enhancements)
-- [Contributing](#contributing)
-
-## System Design
-
-### Stage 1 (SQLite)
-
-- **Database**: SQLite is used in this stage for simplicity. It allows for quick setup and local storage without requiring a separate server.
-- **Basic Operations**: Includes functionality to add products, update stock, track sales, and manage stock movements.
-- **Stock Movement**: Logs stock changes for every addition, sale, or manual removal.
-
-### Stage 2 (PostgreSQL)
-
-- **Database**: PostgreSQL is used in this stage to support more complex, scalable systems.
-- **Multi-store Support**: Each store has its own inventory, allowing businesses to track stock levels at multiple locations.
-- **Authentication**: Basic authentication is implemented to secure API endpoints.
-- **Rate Limiting**: API calls are limited to ensure the system remains stable and prevents overload.
-
-### Stage 3 (PostgreSQL + Advanced Features)
-
-- **Redis Caching**: Improves performance by caching frequently accessed data.
-- **RabbitMQ**: Used for message queuing, allowing asynchronous processing of stock updates.
-- **Improved Scalability**: Optimized for handling more traffic, with better database management and resource utilization.
-
-## API Endpoints
-
-### Stage 1 (SQLite) API Endpoints
-
-- **POST /products**: Add a new product to the inventory.
-- **POST /stock-in**: Add stock to a specific product.
-- **POST /sell**: Sell a product, reducing stock.
-- **POST /remove**: Manually remove stock from inventory.
-- **GET /inventory**: Retrieve the current inventory of all products.
-- **GET /stock-movement**: View logs of stock movements.
-
-### Stage 2 (PostgreSQL) API Endpoints
-
-- **POST /stores**: Add a new store.
-- **POST /products**: Add a new product.
-- **POST /stock-in**: Add stock for a specific product in a store.
-- **POST /sell**: Sell a product from a specific store, updating stock levels.
-- **GET /inventory/:store_id**: View inventory of a specific store.
-- **GET /stock-movements/:store_id**: Retrieve stock movement logs for a store.
-
-### Stage 3 (PostgreSQL + Advanced Features) API Endpoints
-
-- **POST /products**: Add a new product.
-- **POST /stock-in**: Add stock to a store with caching.
-- **POST /sell**: Sell a product, updating stock asynchronously using RabbitMQ.
-- **GET /inventory/:store_id**: Retrieve store inventory, with Redis caching.
-- **GET /stock-movements/:store_id**: View stock movement logs for a store.
-- **POST /async-stock-update**: Asynchronous stock update via RabbitMQ.
-
-## Installation & Setup
-
-### Stage 1 Setup
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-repository/inventory-management-system.git
-   cd inventory-management-system
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start the server**:
-   ```bash
-   node stage1.js
-   ```
-
-4. **Access the API**: The server will be accessible at `http://localhost:5000`.
-
-### Stage 2 Setup
-
-1. **Install PostgreSQL**: Ensure PostgreSQL is installed on your machine.
-
-2. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-repository/inventory-management-system.git
-   cd inventory-management-system
-   ```
-
-3. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-4. **Configure PostgreSQL**: Update the `Postgres_Config.js` file with your PostgreSQL credentials.
-
-5. **Start the server**:
-   ```bash
-   node stage2.js
-   ```
-
-6. **Access the API**: The server will run on `http://localhost:5000`.
-
-### Stage 3 Setup
-
-1. **Install Redis**: Ensure Redis is installed on your machine.
-
-2. **Install RabbitMQ**: Ensure RabbitMQ is installed and running.
-
-3. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-repository/inventory-management-system.git
-   cd inventory-management-system
-   ```
-
-4. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-5. **Configure Redis and RabbitMQ**: Update the configuration files to match your Redis and RabbitMQ setups.
-
-6. **Start the server**:
-   ```bash
-   node stage3.js
-   ```
-
-7. **Access the API**: The server will run on `http://localhost:5000`.
-
-## Usage
-
-### Stage 1 Usage
-
-- **Add a product**:
-  ```bash
-  POST /products
-  Content-Type: application/json
-  {
-    "name": "Product 1",
-    "quantity": 100
-  }
+### Database Design
+- **Stage 1**: 
+  ```sql
+  CREATE TABLE products (id, name, quantity);
+  CREATE TABLE stock_movements (id, product_id, change, action, timestamp);
+  ```
+- **Stage 2**: Added multi-store support:
+  ```sql
+  CREATE TABLE stores (id, name);
+  CREATE TABLE store_inventory (store_id, product_id, quantity);
+  ```
+- **Stage 3**: Introduced audit logs:
+  ```sql
+  CREATE TABLE audit_logs (store_id, product_id, change, action, reason, timestamp);
   ```
 
-- **Increase stock**:
-  ```bash
-  POST /stock-in
-  Content-Type: application/json
-  {
-    "product_id": 1,
-    "quantity": 50
-  }
-  ```
+### API Evolution
+| Endpoint        | Stage 1 | Stage 2               | Stage 3                     |
+|-----------------|---------|-----------------------|-----------------------------|
+| Add Product     | ✅      | ✅                    | ✅ (Async via RabbitMQ)     |
+| Stock Movement  | ✅      | ✅ (Per-store)        | ✅ (With audit logging)     |
+| Get Inventory   | ✅      | ✅ (Filter by store)  | ✅ (Redis-cached)           |
 
-- **Sell a product**:
-  ```bash
-  POST /sell
-  Content-Type: application/json
-  {
-    "product_id": 1,
-    "quantity": 20
-  }
-  ```
 
-- **Get inventory**:
-  ```bash
-  GET /inventory
-  ```
 
-- **Get stock movements**:
-  ```bash
-  GET /stock-movement
-  ```
+## Evolution Rationale
+1. **Stage 1 → Stage 2**:
+   - Migrated to PostgreSQL for concurrent connections
+   - Introduced store-level isolation
+   - Added basic security with rate limiting
 
-### Stage 2 Usage
+2. **Stage 2 → Stage 3**:
+   - Implemented event-driven architecture for high throughput
+   - Added Redis caching for frequent inventory queries
+   - Introduced audit trails for compliance
 
-- **Add a store**:
-  ```bash
-  POST /stores
-  Content-Type: application/json
-  {
-    "name": "Store 1"
-  }
-  ```
+## Future Improvements
+- Implement JWT authentication
+- Add predictive stock alerts using ML
+- Multi-region database replication
+- IoT integration for automated stock tracking
 
-- **Add a product**:
-  ```bash
-  POST /products
-  Content-Type: application/json
-  {
-    "name": "Product 2"
-  }
-  ```
+## Assumptions
+1. Single product catalog across all stores
+2. Stock movements are atomic operations
+3. Audit logs are write-once/immutable
+4. 99.9% inventory accuracy requirement
 
-- **Stock-in a product**:
-  ```bash
-  POST /stock-in
-  Content-Type: application/json
-  {
-    "store_id": 1,
-    "product_id": 1,
-    "quantity": 100
-  }
-  ```
-
-- **Sell a product**:
-  ```bash
-  POST /sell
-  Content-Type: application/json
-  {
-    "store_id": 1,
-    "product_id": 1,
-    "quantity": 10
-  }
-  ```
-
-- **Get inventory for a store**:
-  ```bash
-  GET /inventory/1
-  ```
-
-- **Get stock movements for a store**:
-  ```bash
-  GET /stock-movements/1?start_date=2025-01-01&end_date=2025-01-31
-  ```
-
-### Stage 3 Usage
-
-- **Async stock update**:
-  ```bash
-  POST /async-stock-update
-  Content-Type: application/json
-  {
-    "store_id": 1,
-    "product_id": 1,
-    "quantity": 30
-  }
-  ```
-
-## Future Enhancements
-
-- **User Roles and Permissions**: Different access levels for administrators, managers, and users.
-- **Data Analytics**: Real-time analytics for stock, sales, and trends.
-- **Mobile Application**: Create a mobile app to interact with the API for managing inventory.
-
-## Contributing
-
-Feel free to fork this repository and submit pull requests. Contributions are welcome, whether it's bug fixes, enhancements, or suggestions. Please follow the existing coding style and write tests for any new features added.
-
----
-
-Let me know if you need any further modifications!
+## License
+MIT

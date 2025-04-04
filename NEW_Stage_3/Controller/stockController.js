@@ -2,68 +2,103 @@ import { writePool, readPool } from "../Config/db.js";
 import { redisClient } from "../Config/redis.js";
 import { sendToQueue } from "../Services/rabbitmq.js";
 
+// Stock In Functionality
 const stockIn = async (req, res) => {
   const { store_id, product_id, quantity, reason } = req.body;
 
   // Save the update request to RabbitMQ for processing
-  const stockUpdateMessage = JSON.stringify({ store_id, product_id, quantity, reason });
+  const stockUpdateMessage = JSON.stringify({ store_id, product_id, quantity, reason, action: "stock_in" });
   sendToQueue(stockUpdateMessage);
 
-  // Acknowledge the request immediately to avoid blocking the client
   res.json({ message: "Stock update queued successfully" });
 };
 
-const processStockUpdate = async (msg) => {
-  const { store_id, product_id, quantity, reason } = JSON.parse(msg.content.toString());
+// Sell Functionality
+const sellProduct = async (req, res) => {
+  const { store_id, product_id, quantity, reason } = req.body;
 
-  // Update the inventory directly in PostgreSQL
-  await writePool.query(
-    `INSERT INTO store_inventory (store_id, product_id, quantity)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (store_id, product_id) 
-     DO UPDATE SET quantity = store_inventory.quantity + EXCLUDED.quantity`,
-    [store_id, product_id, quantity]
-  );
+  try {
+    // Check if sufficient stock is available
+    const stockCheck = await readPool.query(
+      "SELECT quantity FROM store_inventory WHERE store_id = $1 AND product_id = $2",
+      [store_id, product_id]
+    );
 
-  // Insert stock movement record
-  await writePool.query(
-    "INSERT INTO stock_movements (store_id, product_id, change, action) VALUES ($1, $2, $3, $4)",
-    [store_id, product_id, quantity, "stock_in"]
-  );
+    if (stockCheck.rows.length === 0 || stockCheck.rows[0].quantity < quantity) {
+      return res.status(400).json({ message: "Insufficient stock" });
+    }
 
-  // Insert audit log
-  await writePool.query(
-    "INSERT INTO audit_logs (store_id, product_id, change, action, reason) VALUES ($1, $2, $3, $4, $5)",
-    [store_id, product_id, quantity, "stock_in", reason]
-  );
+    // Save the sell request to RabbitMQ for processing
+    const sellMessage = JSON.stringify({ store_id, product_id, quantity: -quantity, reason, action: "sale" });
+    sendToQueue(sellMessage);
 
-  // Cache the updated inventory in Redis (optional for quick access)
-  await redisClient.hset(`store:${store_id}:inventory`, product_id, quantity);
-
-  // Acknowledge the message after processing
-  channel.ack(msg);
+    res.json({ message: "Sale queued successfully" });
+  } catch (err) {
+    console.error("Error processing sale:", err);
+    res.status(500).send("Server Error");
+  }
 };
 
-// const getInventory = async (req, res) => {
-//   const { store_id } = req.params;
-//   // Check if the inventory data is cached in Redis
-//   redisClient.hgetall(`store:${store_id}:inventory`, async (err, data) => {
-//     if (data) {
-//       return res.json(data);
-//     } else {
-//       // If not cached, fetch from PostgreSQL
-//       const result = await readPool.query(
-//         "SELECT p.name, si.quantity FROM store_inventory si JOIN products p ON si.product_id = p.id WHERE si.store_id = $1",
-//         [store_id]
-//       );
-//       // Cache the result for future requests
-//       result.rows.forEach((row) => {
-//         redisClient.hset(`store:${store_id}:inventory`, row.product_id, row.quantity);
-//       });
-//       res.json(result.rows);
-//     }
-//   });
-// };
+// Process stock update and sale requests from RabbitMQ
+const processStockUpdate = async (msg) => {
+  const { store_id, product_id, quantity, reason, action } = JSON.parse(msg.content.toString());
+
+  try {
+    // Update the inventory directly in PostgreSQL
+    await writePool.query(
+      `INSERT INTO store_inventory (store_id, product_id, quantity)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (store_id, product_id) 
+       DO UPDATE SET quantity = store_inventory.quantity + EXCLUDED.quantity`,
+      [store_id, product_id, quantity]
+    );
+
+    // Insert stock movement record
+    await writePool.query(
+      "INSERT INTO stock_movements (store_id, product_id, change, action) VALUES ($1, $2, $3, $4)",
+      [store_id, product_id, quantity, action]
+    );
+
+    // Insert audit log
+    await writePool.query(
+      "INSERT INTO audit_logs (store_id, product_id, change, action, reason) VALUES ($1, $2, $3, $4, $5)",
+      [store_id, product_id, quantity, action, reason]
+    );
+
+    // Cache the updated inventory in Redis (optional for quick access)
+    await redisClient.hSet(`store:${store_id}:inventory`, product_id, quantity);
+
+    // Acknowledge the message after processing
+    channel.ack(msg);
+  } catch (err) {
+    console.error("Error processing stock update:", err);
+  }
+};
+
+// Get Inventory with Date Constraint
+const getInventoryWithDate = async (req, res) => {
+  const { store_id } = req.params;
+  const { start_date, end_date } = req.body;
+
+  try {
+    const result = await readPool.query(
+      `SELECT p.name, si.quantity, sm.timestamp 
+       FROM store_inventory si 
+       JOIN products p ON si.product_id = p.id 
+       JOIN stock_movements sm ON si.product_id = sm.product_id AND si.store_id = sm.store_id
+       WHERE si.store_id = $1 
+       AND sm.timestamp BETWEEN $2 AND $3`,
+      [store_id, start_date, end_date]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching inventory:", err);
+    res.status(500).send("Server Error");
+  }
+};
+
+
 const getInventory = async (req, res) => {
   const { store_id } = req.params;
 
@@ -92,4 +127,5 @@ const getInventory = async (req, res) => {
   }
 };
 
-export { stockIn, processStockUpdate, getInventory };
+
+export { stockIn, sellProduct, processStockUpdate, getInventoryWithDate,getInventory };
